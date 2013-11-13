@@ -9,13 +9,14 @@ try:
     from psycopg2.extras import RealDictCursor
     from psycopg2 import connect
     import json
+    import urllib2
 
 except ImportError, err:
     # Still possible to build the documentation without psycopg2
     def connect(*args, **kwargs):
         raise err
 
-class Connection(object):
+class PostGISConnection(object):
     ''' Context manager for Postgres connections.
 
         See http://www.python.org/dev/peps/pep-0343/
@@ -65,12 +66,25 @@ if __name__ == '__main__':
     # Will use to seperate from properties during GeoJSON construction.
     geomcol = 'geom'
 
-    with Connection(dbinfo, geomcol) as db:
+    with PostGISConnection(dbinfo, geomcol) as db:
         db.execute("SELECT gid, s_hood, ST_AsGeoJSON(geom) AS geom FROM neighborhoods LIMIT 50;")
         features = [make_feature(row, geomcol) for row in db.fetchall()]
 
-    feature_collection_str = make_feature_collection([features[0]])
-    print feature_collection_str
+    feature_collection_str = make_feature_collection(features)
 
-    # Connection should be closed.
-    print db
+    values = {
+        "description": "the description for this gist",
+        "public": "false",
+        "files": {
+            "test.geojson": {
+                "content": feature_collection_str
+            }
+        }
+    }
+
+    url = 'https://api.github.com/gists'
+    gist_json = json.dumps(values)
+    req = urllib2.Request(url, gist_json)
+    response = urllib2.urlopen(req)
+    the_page = response.read()
+    print the_page

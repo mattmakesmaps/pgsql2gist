@@ -7,6 +7,7 @@ if __name__ == '__main__':
 
     import urllib2
     import urllib
+    import json
 
     values = {
       "description": "the description for this gist",
@@ -19,8 +20,8 @@ if __name__ == '__main__':
     }
 
     url = 'https://api.github.com/gists'
-    data = urllib.urlencode(values)
-    req = urllib2.Request(url, data)
+    #data = urllib.urlencode(json.dumps(values))
+    req = urllib2.Request(url, json.dumps(values))
     response = urllib2.urlopen(req)
     the_page = response.read()
     print the_page
