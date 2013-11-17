@@ -57,9 +57,10 @@ def make_feature_collection(features_str):
 if __name__ == '__main__':
     # Stub for connection parameters.
     dbinfo = {
-        'host': 'localhost',
-        'user': 'matt',
-        'database': 'tilestache',
+        'host': 'pgsqlgis-repos',
+        'user': 'postgres',
+        'password': 'postgres',
+        'database': 'osm_planet2',
         'port': int(5432)
     }
     # Specify what the geometry column is.
@@ -67,16 +68,19 @@ if __name__ == '__main__':
     geomcol = 'geom'
 
     with PostGISConnection(dbinfo, geomcol) as db:
-        db.execute("SELECT gid, s_hood, ST_AsGeoJSON(geom) AS geom FROM neighborhoods LIMIT 50;")
+        #db.execute("SELECT gid, s_hood, ST_AsGeoJSON(geom) AS geom FROM neighborhoods LIMIT 50;")
+        #db.execute("SELECT name, type, osm_id, ST_AsGeoJSON(ST_Transform(ST_PointOnSurface(geometry),4326)) AS geom FROM osm_new_waterareas WHERE name = 'Lake Chelan';")
+        #db.execute("SELECT name, ST_AsGeoJSON(ST_Transform(ST_Buffer(ST_Collect(geometry), 0), 4326)) AS geometry FROM osm_new_waterareas WHERE name = 'Lake Chelan' GROUP BY name")
+        db.execute("SELECT name, ST_Area(Geography(ST_Transform((ST_DUMP(ST_BUFFER(ST_Collect(geometry), 0))).geom,4326))) AS area, ST_AsGeoJSON(ST_Transform(ST_PointOnSurface((ST_DUMP(ST_BUFFER(ST_Collect(geometry), 0))).geom), 4326)) AS geom FROM osm_new_waterareas WHERE name = 'Lake Chelan' GROUP BY name;")
         features = [make_feature(row, geomcol) for row in db.fetchall()]
 
     feature_collection_str = make_feature_collection(features)
 
     values = {
-        "description": "the description for this gist",
+        "description": "Features contained within an imposm db's osm_new_waterareas table, named Lake Chelan",
         "public": "false",
         "files": {
-            "test.geojson": {
+            "chelan.geojson": {
                 "content": feature_collection_str
             }
         }
