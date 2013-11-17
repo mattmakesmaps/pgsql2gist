@@ -35,7 +35,40 @@ class PostGISConnection(object):
         self.db.connection.close()
 
 
-class interface(object):
+class GistAPI_Interface(object):
+    """
+    Provides functions for interacting with the github gist API.
+    """
+    def __init__(self, description, file, content):
+        self.url = 'https://api.github.com/gists'
+        self.description = description
+        self.public = "false"
+        self.file = file
+        self.content = content
+        self.response_content = None
+
+    def submit(self):
+        """
+        Develop and submit a POST request to the github gist api.
+        Populate response_content with resulting data.
+        """
+        # Build data payload.
+        data = {
+            "description": self.description,
+            "public": self.public,
+            "files": {
+                self.file: {
+                    "content": self.content
+                }
+            }
+        }
+        data_as_json = json.dumps(data)
+        # Submit Request
+        request = urllib2.Request(self.url, data_as_json)
+        self.response_content = json.loads(urllib2.urlopen(request).read())
+        return True
+
+class CLI_Interface(object):
     """
     Basic command line interface using argparse.
     Based on pgsql2shp.
@@ -91,31 +124,14 @@ def make_geojson_feature_collection(features_str):
     return encoded_feature_collection
 
 if __name__ == '__main__':
-    new_interface = interface().parser
+    arg_parse = CLI_Interface().parser
     # vars() will convert the argparse namespace object to a python dict
-    args = vars(new_interface.parse_args())
+    args = vars(arg_parse.parse_args())
 
     with PostGISConnection(**args) as db:
         db.execute(args["SELECT"])
         features = [make_geojson_feature(row, args["geom_col"]) for row in db.fetchall()]
 
-    # values will be converted to json object, for POST request to github API.
-    values = {
-        "description": args["description"],
-        "public": "false",
-        "files": {
-            args["file"]: {
-                "content": make_geojson_feature_collection(features)
-            }
-        }
-    }
-
-    # Build the POST request, with url and gist_json data object.
-    url = 'https://api.github.com/gists'
-    gist_json = json.dumps(values)
-    req = urllib2.Request(url, gist_json)
-
-    # Read the response from github; print html_url to user.
-    response = json.loads(urllib2.urlopen(req).read())
-    response_gist_url = response["html_url"]
-    print response_gist_url
+    gist_handler = GistAPI_Interface(args["description"], args["file"], make_geojson_feature_collection(features))
+    gist_handler.submit()
+    print gist_handler.response_content["html_url"]
