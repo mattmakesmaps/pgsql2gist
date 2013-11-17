@@ -65,7 +65,9 @@ class GistAPI_Interface(object):
         data_as_json = json.dumps(data)
         # Submit Request
         request = urllib2.Request(self.url, data_as_json)
-        self.response_content = json.loads(urllib2.urlopen(request).read())
+        response = urllib2.urlopen(request)
+        # Populate instance attribute with JSON response from github.
+        self.response_content = json.loads(response.read())
         return True
 
 class CLI_Interface(object):
