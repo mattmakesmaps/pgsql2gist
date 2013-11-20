@@ -187,7 +187,6 @@ def make_geojson_feature_collection(features_str):
 
 if __name__ == '__main__':
     arg_parse = CLI_Interface()
-    # vars() will convert the argparse namespace object to a python dict
     args = arg_parse.get_args_dict()
 
     with PostGISConnection(**args) as db:
