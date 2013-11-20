@@ -134,19 +134,19 @@ class CLI_Interface(object):
         args = self.parser.parse_args()
         args_dict = vars(args)
         #if self._validate_args_dict(args_dict):
-        if self._validate_file_ext(args_dict):
+        if self._validate_args_dict(args_dict):
             return args_dict
 
     def _validate_args_dict(self, args_dict):
         """
         Internal method to perform validation tasks against the argparse arguments (as dict).
-        Each validation function should return true or raise a SystemExit error with
+        Each validation function should return True or raise a SystemExit error with
         an error message. If all functions pass, return true.
         """
         validation_functions = [self._validate_file_ext]
         for func in validation_functions:
-            func()
-        return true
+            func(args_dict)
+        return True
 
     def _validate_file_ext(self, args_dict):
         """
@@ -195,6 +195,5 @@ if __name__ == '__main__':
         features = [make_geojson_feature(row, args["geom_col"]) for row in db.fetchall()]
 
     gist_handler = GistAPI_Interface(args["description"], args["file"], make_geojson_feature_collection(features))
-    #gist_handler.submit()
-    #print gist_handler.response_content["html_url"]
-
+    gist_handler.submit()
+    print gist_handler.response_content["html_url"]
