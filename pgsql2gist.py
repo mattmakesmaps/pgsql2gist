@@ -126,6 +126,44 @@ class CLI_Interface(object):
         # Add custom help flag
         self.parser.add_argument("-?", "--help", action="help")
 
+    def get_args_dict(self):
+        """
+        Given an argparse parser object, wrap in a call to vars(), returning dictionary.
+        This method also calls the input validation method.
+        """
+        args = self.parser.parse_args()
+        args_dict = vars(args)
+        #if self._validate_args_dict(args_dict):
+        if self._validate_file_ext(args_dict):
+            return args_dict
+
+    def _validate_args_dict(self, args_dict):
+        """
+        Internal method to perform validation tasks against the argparse arguments (as dict).
+        Each validation function should return true or raise a SystemExit error with
+        an error message. If all functions pass, return true.
+        """
+        validation_functions = [self._validate_file_ext]
+        for func in validation_functions:
+            func()
+        return true
+
+    def _validate_file_ext(self, args_dict):
+        """
+        Validate that file extensions are either geojson or topojson.
+        Required for data to render in mapping interface.
+        """
+        valid_extensions = ['.geojson','topojson']
+        v_test = False
+        for ext in valid_extensions:
+            if args_dict['file'].endswith(ext):
+                v_test = True
+        if v_test:
+            return True
+        else:
+            print 'ERROR: File extension does not end in .geojson or .topojson'
+            raise SystemExit
+
 def make_geojson_feature(row, geom_column):
     """
     Given a database row via Psycopg's RealDictCursor
@@ -148,15 +186,15 @@ def make_geojson_feature_collection(features_str):
     return encoded_feature_collection
 
 if __name__ == '__main__':
-    arg_parse = CLI_Interface().parser
+    arg_parse = CLI_Interface()
     # vars() will convert the argparse namespace object to a python dict
-    args = vars(arg_parse.parse_args())
+    args = arg_parse.get_args_dict()
 
     with PostGISConnection(**args) as db:
         db.execute(args["SELECT"])
         features = [make_geojson_feature(row, args["geom_col"]) for row in db.fetchall()]
 
     gist_handler = GistAPI_Interface(args["description"], args["file"], make_geojson_feature_collection(features))
-    gist_handler.submit()
-    print gist_handler.response_content["html_url"]
+    #gist_handler.submit()
+    #print gist_handler.response_content["html_url"]
 
