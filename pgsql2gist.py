@@ -2,7 +2,7 @@ __author__ = 'matt'
 __date__ = '11/19/13'
 
 from psycopg2.extras import RealDictCursor
-from psycopg2 import connect
+from psycopg2 import connect, Error
 import json
 import urllib2
 import argparse
@@ -12,6 +12,7 @@ class PostGISConnection(object):
 
         See http://www.python.org/dev/peps/pep-0343/
         and http://effbot.org/zone/python-with-statement.htm
+
         Ripped from TileStache.
     '''
     def __init__(self, **kwargs):
@@ -28,7 +29,12 @@ class PostGISConnection(object):
             if key in dbconnkeys and value:
                 dbinfo[key] = value
 
-        self.db = connect(**dbinfo).cursor(cursor_factory=RealDictCursor)
+        try:
+            self.db = connect(**dbinfo).cursor(cursor_factory=RealDictCursor)
+        except Error as e:
+            print "PostGIS Connection Error: ", e.message
+            print 'Terminating Script'
+            raise SystemExit
         return self.db
 
     def __exit__(self, type, value, traceback):
@@ -190,9 +196,15 @@ if __name__ == '__main__':
     args = arg_parse.get_args_dict()
 
     with PostGISConnection(**args) as db:
-        db.execute(args["SELECT"])
+        try:
+            db.execute(args["SELECT"])
+        except Error as e:
+            print "PostGIS SQL Execution Error: ", e.message
+            print 'Terminating Script'
+            raise SystemExit
+
         features = [make_geojson_feature(row, args["geom_col"]) for row in db.fetchall()]
 
     gist_handler = GistAPI_Interface(args["description"], args["file"], make_geojson_feature_collection(features))
-    gist_handler.submit()
+    #gist_handler.submit()
     print gist_handler.response_content["html_url"]
