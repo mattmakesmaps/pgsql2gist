@@ -1,20 +1,21 @@
 __author__ = 'matt'
 __date__ = '11/19/13'
+__version__ = '0.1'
 
 from psycopg2.extras import RealDictCursor
 from psycopg2 import connect, Error
-import json
-import urllib2
 import argparse
+import json
+import time
+import urllib2
 
 class PostGISConnection(object):
-    ''' Context manager for Postgres connections.
-
-        See http://www.python.org/dev/peps/pep-0343/
-        and http://effbot.org/zone/python-with-statement.htm
-
-        Ripped from TileStache.
-    '''
+    """
+    Ripped from TileStache.
+    Context manager for Postgres connections.
+    See http://www.python.org/dev/peps/pep-0343/
+    and http://effbot.org/zone/python-with-statement.htm
+    """
     def __init__(self, **kwargs):
         self.kwargs = kwargs
 
@@ -44,16 +45,38 @@ class PostGISConnection(object):
 class GistAPI_Interface(object):
     """
     Provides functions for interacting with the github gist API.
-    """
-    def __init__(self, description, file, content):
-        self.url = 'https://api.github.com/gists'
-        self.description = description
-        self.public = "false"
-        self.file = file
-        self.content = content
-        self.response_content = None
 
-    def http_request(self, json_data):
+    Required parameters:
+    description (STRING) - A brief description of the gist contents
+    file (STRING) - File name. Required to be in extension '.geojson' OR '.topojson'
+    content (STRING) - Required to be Valid GeoJSON or TopoJSON
+    """
+    def __init__(self, file, description, content):
+        self.content = content
+        self.description = description
+        self.file = file
+        self.public = "false"
+        self.response_content = None
+        self.response_headers = None
+        self.url = 'https://api.github.com/gists'
+
+    def _build_request(self):
+        """
+        Given instance attributes, generate a properly formatted
+        JSON request for the gist API.
+        """
+        data = {
+            "description": self.description,
+            "public": self.public,
+            "files": {
+                self.file: {
+                    "content": self.content
+                }
+            }
+        }
+        return json.dumps(data)
+
+    def _submit_request(self, json_data):
         """
         Given a JSON object properly formatted for the gist API
         Submit via http POST.
@@ -76,27 +99,25 @@ class GistAPI_Interface(object):
 
     def submit(self):
         """
-        Develop and submit a POST request to the github gist api.
-        Populate response_content with resulting data.
-        """
-        # Build data payload.
-        data = {
-            "description": self.description,
-            "public": self.public,
-            "files": {
-                self.file: {
-                    "content": self.content
-                }
-            }
-        }
-        data_as_json = json.dumps(data)
+        Execute a series of internal class methods responsible for processing
+        the request/response interaction between the client and the github API.
 
-        # TODO: Implement response validation logic. E.g. check we have a good response.
-        # Submit Request
-        response = self.http_request(data_as_json)
+        This method updates the class instance's response_content attribute, which
+        contains the gist url.
+        """
+
+        data_as_json = self._build_request()
+        response = self._submit_request(data_as_json)
+        self.response_headers = response.headers.dict
+
         # Populate instance attribute with JSON response from github.
-        self.response_content = json.loads(response.read())
-        return True
+        if response.code == 201:
+            self.response_content = json.loads(response.read())
+            return True
+        else:
+            print "Gist creation failed. Server returned HTTP code: ", response.code
+            raise SystemExit
+
 
 class CLI_Interface(object):
     """
@@ -139,7 +160,6 @@ class CLI_Interface(object):
         """
         args = self.parser.parse_args()
         args_dict = vars(args)
-        #if self._validate_args_dict(args_dict):
         if self._validate_args_dict(args_dict):
             return args_dict
 
@@ -160,11 +180,11 @@ class CLI_Interface(object):
         Required for data to render in mapping interface.
         """
         valid_extensions = ['.geojson','topojson']
-        v_test = False
+        ext_is_valid = False
         for ext in valid_extensions:
             if args_dict['file'].endswith(ext):
-                v_test = True
-        if v_test:
+                ext_is_valid  = True
+        if ext_is_valid:
             return True
         else:
             print 'ERROR: File extension does not end in .geojson or .topojson'
@@ -192,9 +212,11 @@ def make_geojson_feature_collection(features_str):
     return encoded_feature_collection
 
 if __name__ == '__main__':
+    # Setup CLI; Parse User Input
     arg_parse = CLI_Interface()
     args = arg_parse.get_args_dict()
 
+    # Open DB Connection; Execute Query
     with PostGISConnection(**args) as db:
         try:
             db.execute(args["SELECT"])
@@ -203,8 +225,23 @@ if __name__ == '__main__':
             print 'Terminating Script'
             raise SystemExit
 
+        # Create list of geojson features
         features = [make_geojson_feature(row, args["geom_col"]) for row in db.fetchall()]
 
-    gist_handler = GistAPI_Interface(args["description"], args["file"], make_geojson_feature_collection(features))
-    #gist_handler.submit()
-    print gist_handler.response_content["html_url"]
+    # Setup and submit request to gist API
+    gist_handler = GistAPI_Interface(args["file"],
+                                     args["description"],
+                                     make_geojson_feature_collection(features))
+    gist_handler.submit()
+
+    # Return rate limit information to user.
+    if "x-ratelimit-limit" in gist_handler.response_headers:
+        req_remaining = gist_handler.response_headers["x-ratelimit-remaining"]
+        req_limit = gist_handler.response_headers["x-ratelimit-limit"]
+        reset_time_epoch = gist_handler.response_headers["x-ratelimit-reset"]
+        reset_time_human = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(reset_time_epoch)))
+        print "%s requests remaining of %s total. Reset in: %s" % (req_remaining, req_limit, reset_time_human)
+    # The presence of an html_url attribute indicates success.
+    # MK TODO: Is there a better way of indicating success?
+    if "html_url" in gist_handler.response_content:
+        print "Gist URL: ", gist_handler.response_content["html_url"]
