@@ -42,6 +42,7 @@ import argparse
 import json
 import time
 import urllib2
+import sys
 
 class PostGISConnection(object):
     """
@@ -200,12 +201,17 @@ class CLI_Interface(object):
     def _validate_args_dict(self, args_dict):
         """
         Internal method to perform validation tasks against the argparse arguments (as dict).
-        Each validation function should return True or raise a SystemExit error with
-        an error message. If all functions pass, return true.
+        Each validation function should return True or raise an error with an error message.
+        Each raised error will be caught by a generic Error exception, and will raise a
+        SystemExit error, terminating the script.
         """
         validation_functions = [self._validate_file_ext]
         for func in validation_functions:
-            func(args_dict)
+            try:
+                func(args_dict)
+            except Error as e:
+                print "Terminating Script"
+                raise SystemExit
         return True
 
     def _validate_file_ext(self, args_dict):
@@ -222,7 +228,7 @@ class CLI_Interface(object):
             return True
         else:
             print 'ERROR: File extension does not end in .geojson or .topojson'
-            raise SystemExit
+            raise ValueError
 
 def make_geojson_feature(row, geom_column):
     """
