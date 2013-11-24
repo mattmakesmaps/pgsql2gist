@@ -114,7 +114,7 @@ class GeoJSONConstructor(object):
 
     def encode(self):
         """
-        Return back a GeoJSON feature collection object.
+        Return back a string representing a GeoJSON feature collection.
         """
         features = [self.make_feature(row, self.geom_col) for row in self.records]
         feature_collection = self.make_feature_collection(features)
