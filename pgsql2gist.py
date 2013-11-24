@@ -205,11 +205,11 @@ class CLI_Interface(object):
         Each raised error will be caught by a generic Error exception, and will raise a
         SystemExit error, terminating the script.
         """
-        validation_functions = [self._validate_file_ext]
+        validation_functions = [self._validate_file_ext, self._validate_topojson_geojson_call]
         for func in validation_functions:
             try:
                 func(args_dict)
-            except Error as e:
+            except Exception, e:
                 print "Terminating Script"
                 raise SystemExit
         return True
@@ -228,6 +228,22 @@ class CLI_Interface(object):
             return True
         else:
             print 'ERROR: File extension does not end in .geojson or .topojson'
+            raise ValueError
+
+    def _validate_topojson_geojson_call(self, args_dict):
+        """
+        Validate that a user has invoked a call to ST_AsGeoJSON() or ST_AsTopoJSON()
+        in their SELECT statement.
+        """
+        valid_calls = ['st_asgeojson', 'st_astopojson']
+        call_is_valid = False
+        for call in valid_calls:
+            if call.lower() in args_dict['SELECT'].lower():
+                call_is_valid = True
+        if call_is_valid:
+            return True
+        else:
+            print 'ERROR: SELECT statement does not contain call to ST_AsGeoJSON() or ST_AsTopoJSON()'
             raise ValueError
 
 def make_geojson_feature(row, geom_column):
