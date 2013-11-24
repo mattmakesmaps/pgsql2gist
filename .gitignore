@@ -1,5 +1,7 @@
 *.py[cod]
 *.idea
+coverage_output
+code_snippets
 
 # C extensions
 *.so

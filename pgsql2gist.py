@@ -69,8 +69,7 @@ class PostGISConnection(object):
             self.db = connect(**dbinfo).cursor(cursor_factory=RealDictCursor)
         except Error as e:
             print "PostGIS Connection Error: ", e.message
-            print 'Terminating Script'
-            raise SystemExit
+            raise e
         return self.db
 
     def __exit__(self, type, value, traceback):
@@ -165,13 +164,11 @@ class GistAPIHandler(object):
         # Catch URL/HTTP errors, then abort script.
         except urllib2.HTTPError as e:
             print 'ERROR: Server returned HTTP Error Code:', e.code
-            print 'Terminating Script'
-            raise SystemExit
+            raise e
         except urllib2.URLError as e:
             print 'ERROR: Server Could Not Be Reached.'
             print 'REASON: ', e.reason
-            print 'Terminating Script'
-            raise SystemExit
+            raise e
         else:
             return response
 
@@ -194,7 +191,7 @@ class GistAPIHandler(object):
             return True
         else:
             print "Gist creation failed. Server returned HTTP code: ", response.code
-            raise SystemExit
+            raise urllib2.HTTPError
 
 
 class CLIInterface(object):
@@ -253,8 +250,7 @@ class CLIInterface(object):
             try:
                 func(args_dict)
             except Exception, e:
-                print "Terminating Script"
-                raise SystemExit
+                raise e
         return True
 
     def _validate_file_ext(self, args_dict):
@@ -291,33 +287,36 @@ class CLIInterface(object):
 
 
 if __name__ == '__main__':
-    # Setup CLI; Parse User Input
-    arg_parse = CLIInterface()
-    args = arg_parse.get_args_dict()
+    try:
+        # Setup CLI; Parse User Input
+        arg_parse = CLIInterface()
+        args = arg_parse.get_args_dict()
 
-    # Open DB Connection; Execute Query
-    with PostGISConnection(**args) as db:
-        try:
-            db.execute(args["SELECT"])
-        except Error as e:
-            print "PostGIS SQL Execution Error: ", e.message
-            print 'Terminating Script'
-            raise SystemExit
-        # Get results
-        query_results = db.fetchall()
+        # Open DB Connection; Execute Query
+        with PostGISConnection(**args) as db:
+            try:
+                db.execute(args["SELECT"])
+            except Error as e:
+                print "PostGIS SQL Execution Error: ", e.message
+                raise e
+            # Get results
+            query_results = db.fetchall()
 
-    # Create GeoJSON Feature Collection
-    features = GeoJSONConstructor(query_results, args["geom_col"]).encode()
-    # Setup and create request to Gist API
-    gist_handler = GistAPIHandler(args["file"], args["description"], features)
-    gist_handler.create()
+        # Create GeoJSON Feature Collection
+        features = GeoJSONConstructor(query_results, args["geom_col"]).encode()
+        # Setup and create request to Gist API
+        gist_handler = GistAPIHandler(args["file"], args["description"], features)
+        gist_handler.create()
 
-    # Return rate limit and gist url to user.
-    if "x-ratelimit-limit" in gist_handler.response_headers:
-        req_remaining = gist_handler.response_headers["x-ratelimit-remaining"]
-        req_limit = gist_handler.response_headers["x-ratelimit-limit"]
-        reset_time_epoch = gist_handler.response_headers["x-ratelimit-reset"]
-        reset_time_human = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(reset_time_epoch)))
-        print "%s requests remaining of %s total. Reset in: %s" % (req_remaining, req_limit, reset_time_human)
-    if "html_url" in gist_handler.response_content:
-        print "Gist URL: ", gist_handler.response_content["html_url"]
+        # Return rate limit and gist url to user.
+        if "x-ratelimit-limit" in gist_handler.response_headers:
+            req_remaining = gist_handler.response_headers["x-ratelimit-remaining"]
+            req_limit = gist_handler.response_headers["x-ratelimit-limit"]
+            reset_time_epoch = gist_handler.response_headers["x-ratelimit-reset"]
+            reset_time_human = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(reset_time_epoch)))
+            print "%s requests remaining of %s total. Reset in: %s" % (req_remaining, req_limit, reset_time_human)
+        if "html_url" in gist_handler.response_content:
+            print "Gist URL: ", gist_handler.response_content["html_url"]
+    except Exception as e:
+        print 'Terminating Script'
+        raise SystemExit
