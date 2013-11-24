@@ -76,21 +76,64 @@ class PostGISConnection(object):
     def __exit__(self, type, value, traceback):
         self.db.connection.close()
 
-
-class GistAPI_Interface(object):
+class GeoJSONConstructor(object):
     """
-    Provides functions for interacting with the github gist API.
+    Given the following inputs, generate a GeoJSON feature collection.
+
+    Required Parameters:
+    records (LIST) - Each element is a dictionary representing
+    columns and values for a single geojson feature.
+    geom_col (STRING) - Indicates which dict key represents the geometry column.
+
+    TODO: Include validation checks.
+    """
+    def __init__(self, records, geom_col='geometry'):
+        self.records = records
+        self.geom_col = geom_col
+
+    def make_feature(self, record, geom_column):
+        """
+        Given a database row via Psycopg's RealDictCursor
+        return back a completed GeoJSON feature containing
+        properties and geometries.
+        """
+        geometry = json.loads(record.pop(geom_column))
+        feature = dict(type='Feature', geometry=geometry, properties=record)
+        encoded_feature = json.dumps(feature)
+        return encoded_feature
+
+    def make_feature_collection(self, features_list):
+        """
+        Given a list containing GeoJSON features, return as a
+        GeoJSON Feature Collection.
+        """
+        features_json = [json.loads(feature) for feature in features_list]
+        feature_collection = dict(type='FeatureCollection', features=features_json)
+        encoded_feature_collection = json.dumps(feature_collection)
+        return encoded_feature_collection
+
+    def encode(self):
+        """
+        Return back a GeoJSON feature collection object.
+        """
+        features = [self.make_feature(row, args["geom_col"]) for row in self.records]
+        feature_collection = self.make_feature_collection(features)
+        return feature_collection
+
+class GistAPIHandler(object):
+    """
+    Provides methods for interacting with the Github Gist API.
 
     Required parameters:
-    description (STRING) - A brief description of the gist contents
     file (STRING) - File name. Required to be in extension '.geojson' OR '.topojson'
-    content (STRING) - Required to be Valid GeoJSON or TopoJSON
+    description (STRING) - A brief description of the gist contents
+    content (STRING) - Implied to be Valid GeoJSON or TopoJSON, but not required.
     """
-    def __init__(self, file, description, content):
+    def __init__(self, file, description, content, public="false"):
         self.content = content
         self.description = description
         self.file = file
-        self.public = "false"
+        self.public = public
         self.response_content = None
         self.response_headers = None
         self.url = 'https://api.github.com/gists'
@@ -132,7 +175,7 @@ class GistAPI_Interface(object):
         else:
             return response
 
-    def submit(self):
+    def create(self):
         """
         Execute a series of internal class methods responsible for processing
         the request/response interaction between the client and the github API.
@@ -154,7 +197,7 @@ class GistAPI_Interface(object):
             raise SystemExit
 
 
-class CLI_Interface(object):
+class CLIInterface(object):
     """
     Basic command line interface using argparse.
     Based on pgsql2shp.
@@ -246,30 +289,10 @@ class CLI_Interface(object):
             print 'ERROR: SELECT statement does not contain call to ST_AsGeoJSON() or ST_AsTopoJSON()'
             raise ValueError
 
-def make_geojson_feature(row, geom_column):
-    """
-    Given a database row via Psycopg's RealDictCursor
-    return back a completed GeoJSON feature containing
-    properties and geometries.
-    """
-    geometry = json.loads(row.pop(geom_column))
-    feature = dict(type='Feature', geometry=geometry, properties=row)
-    encoded = json.dumps(feature)
-    return encoded
-
-def make_geojson_feature_collection(features_str):
-    """
-    Given a list containing GeoJSON features, return as a
-    GeoJSON Feature Collection.
-    """
-    features_json = [json.loads(feature) for feature in features_str]
-    feature_collection = dict(type='FeatureCollection', features=features_json)
-    encoded_feature_collection = json.dumps(feature_collection)
-    return encoded_feature_collection
 
 if __name__ == '__main__':
     # Setup CLI; Parse User Input
-    arg_parse = CLI_Interface()
+    arg_parse = CLIInterface()
     args = arg_parse.get_args_dict()
 
     # Open DB Connection; Execute Query
@@ -280,24 +303,21 @@ if __name__ == '__main__':
             print "PostGIS SQL Execution Error: ", e.message
             print 'Terminating Script'
             raise SystemExit
+        # Get results
+        query_results = db.fetchall()
 
-        # Create list of geojson features
-        features = [make_geojson_feature(row, args["geom_col"]) for row in db.fetchall()]
+    # Create GeoJSON Feature Collection
+    features = GeoJSONConstructor(query_results).encode()
+    # Setup and create request to Gist API
+    gist_handler = GistAPIHandler(args["file"], args["description"], features)
+    gist_handler.create()
 
-    # Setup and submit request to gist API
-    gist_handler = GistAPI_Interface(args["file"],
-                                     args["description"],
-                                     make_geojson_feature_collection(features))
-    gist_handler.submit()
-
-    # Return rate limit information to user.
+    # Return rate limit and gist url to user.
     if "x-ratelimit-limit" in gist_handler.response_headers:
         req_remaining = gist_handler.response_headers["x-ratelimit-remaining"]
         req_limit = gist_handler.response_headers["x-ratelimit-limit"]
         reset_time_epoch = gist_handler.response_headers["x-ratelimit-reset"]
         reset_time_human = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(reset_time_epoch)))
         print "%s requests remaining of %s total. Reset in: %s" % (req_remaining, req_limit, reset_time_human)
-    # The presence of an html_url attribute indicates success.
-    # MK TODO: Is there a better way of indicating success?
     if "html_url" in gist_handler.response_content:
         print "Gist URL: ", gist_handler.response_content["html_url"]

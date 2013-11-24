@@ -2,7 +2,7 @@ __author__ = 'matt'
 __date__ = '11/22/13'
 import sys, unittest
 from nose.tools import with_setup, raises
-from pgsql2gist import CLI_Interface
+from pgsql2gist import CLIInterface
 
 class TestKeyValues(object):
     def setup(self):
@@ -16,7 +16,7 @@ class TestKeyValues(object):
                 'tilestache',
                 'SELECT hoods_, ST_AsGeoJSON(geom) AS geometry FROM neighborhoods LIMIT 5;']
         sys.argv = self.args
-        self.arg_parser = CLI_Interface()
+        self.arg_parser = CLIInterface()
 
     def test_keys(self):
         """
@@ -54,7 +54,7 @@ class TestBadInput(object):
                      'tilestache',
                      'SELECT hoods_, ST_AsGeoJSON(geom) AS geometry FROM neighborhoods LIMIT 5;']
         sys.argv = self.args
-        self.arg_parser = CLI_Interface()
+        self.arg_parser = CLIInterface()
 
     @raises(ValueError)
     def test_file_extension_validation(self):

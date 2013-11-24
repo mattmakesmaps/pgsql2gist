@@ -49,7 +49,7 @@ class GistAPI_Interface(object):
 
     def submit(self):
         """
-        Develop and submit a POST request to the github gist api.
+        Develop and create a POST request to the github gist api.
         Populate response_content with resulting data.
         """
         # Build data payload.
