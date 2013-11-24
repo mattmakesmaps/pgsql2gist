@@ -85,7 +85,7 @@ class GeoJSONConstructor(object):
     columns and values for a single geojson feature.
     geom_col (STRING) - Indicates which dict key represents the geometry column.
 
-    TODO: Include validation checks.
+    TODO: Include validation checks. Add Exception Handling.
     """
     def __init__(self, records, geom_col='geometry'):
         self.records = records
@@ -116,7 +116,7 @@ class GeoJSONConstructor(object):
         """
         Return back a GeoJSON feature collection object.
         """
-        features = [self.make_feature(row, args["geom_col"]) for row in self.records]
+        features = [self.make_feature(row, self.geom_col) for row in self.records]
         feature_collection = self.make_feature_collection(features)
         return feature_collection
 
@@ -307,7 +307,7 @@ if __name__ == '__main__':
         query_results = db.fetchall()
 
     # Create GeoJSON Feature Collection
-    features = GeoJSONConstructor(query_results).encode()
+    features = GeoJSONConstructor(query_results, args["geom_col"]).encode()
     # Setup and create request to Gist API
     gist_handler = GistAPIHandler(args["file"], args["description"], features)
     gist_handler.create()

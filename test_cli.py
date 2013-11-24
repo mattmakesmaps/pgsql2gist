@@ -56,7 +56,7 @@ class TestBadInput(object):
         sys.argv = self.args
         self.arg_parser = CLIInterface()
 
-    @raises(ValueError)
+    @raises(SystemExit)
     def test_file_extension_validation(self):
         """
         Check that an error message is populated
