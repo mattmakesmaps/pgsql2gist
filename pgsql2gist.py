@@ -36,17 +36,7 @@ optional arguments:
   -?, --help
 """
 
-"""
-# The following could be used to import each class as seperate
-# modules in the event they existed in the same directory.
-
-from gisthandler import GistAPIHandler
-from pgconn import PostGISConnection
-from cli import CLIInterface
-from geojson import GeoJSONConstructor
-"""
-
-# This import pattern relies on the creation of a pgsql2gist package.
+# Import relevant modules from the pgsql2gist package.
 from pgsql2gist import GistAPIHandler, PostGISConnection, CLIInterface, GeoJSONConstructor
 
 from psycopg2 import Error
@@ -86,6 +76,6 @@ if __name__ == '__main__':
             print "Gist URL: ", gist_handler.response_content["html_url"]
     except Exception as e:
         if e.message:
-            print e.message
+            print "ERROR: ", e.message
         print 'Terminating Script'
         raise SystemExit

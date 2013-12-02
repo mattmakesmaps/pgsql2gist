@@ -4,6 +4,7 @@ __date__ = '11/24/13'
 import json
 import urllib2
 
+
 class GistAPIHandler(object):
     """
     Provides methods for interacting with the Github Gist API.
@@ -13,10 +14,10 @@ class GistAPIHandler(object):
     description (STRING) - A brief description of the gist contents
     content (STRING) - Implied to be Valid GeoJSON or TopoJSON, but not required.
     """
-    def __init__(self, file, description, content, public="false"):
+    def __init__(self, filename, description, content, public="false"):
         self.content = content
         self.description = description
-        self.file = file
+        self.file = filename
         self.public = public
         self.response_content = None
         self.response_headers = None

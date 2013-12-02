@@ -4,8 +4,10 @@ __date__ = '11/24/13'
 import collections
 import json
 
+
 class OutOfBoundsError(Exception):
     pass
+
 
 class GeoJSONConstructor(object):
     """
@@ -58,7 +60,6 @@ class GeoJSONConstructor(object):
         if 90 < coordinate[1] or coordinate[1] < -90:
             raise OutOfBoundsError("Coordinate %f, %f is not valid WGS84" % (coordinate[0], coordinate[1]))
         return True
-
 
     def make_feature(self, record, geom_column):
         """

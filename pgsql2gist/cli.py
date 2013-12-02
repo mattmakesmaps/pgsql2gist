@@ -3,6 +3,7 @@ __date__ = '11/24/13'
 
 import argparse
 
+
 class CLIInterface(object):
     """
     Basic command line interface using argparse.
@@ -67,16 +68,15 @@ class CLIInterface(object):
         Validate that file extensions are either geojson or topojson.
         Required for data to render in mapping interface.
         """
-        valid_extensions = ['.geojson','topojson']
+        valid_extensions = ['.geojson', 'topojson']
         ext_is_valid = False
         for ext in valid_extensions:
             if args_dict['file'].endswith(ext):
-                ext_is_valid  = True
+                ext_is_valid = True
         if ext_is_valid:
             return True
         else:
-            print 'ERROR: File extension does not end in .geojson or .topojson'
-            raise ValueError
+            raise ValueError('File extension does not end in .geojson or .topojson')
 
     def _validate_topojson_geojson_call(self, args_dict):
         """
@@ -91,6 +91,4 @@ class CLIInterface(object):
         if call_is_valid:
             return True
         else:
-            print 'ERROR: SELECT statement does not contain call to ST_AsGeoJSON() or ST_AsTopoJSON()'
-            raise ValueError
-
+            raise ValueError('SELECT statement does not contain call to ST_AsGeoJSON() or ST_AsTopoJSON()')
