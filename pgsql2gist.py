@@ -85,5 +85,7 @@ if __name__ == '__main__':
         if "html_url" in gist_handler.response_content:
             print "Gist URL: ", gist_handler.response_content["html_url"]
     except Exception as e:
+        if e.message:
+            print e.message
         print 'Terminating Script'
         raise SystemExit
