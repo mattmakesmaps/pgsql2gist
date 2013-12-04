@@ -1,7 +1,9 @@
 *.py[cod]
 *.idea
+.DS_Store
 coverage_output
 code_snippets
+MANIFEST
 
 # C extensions
 *.so

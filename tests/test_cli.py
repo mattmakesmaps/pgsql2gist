@@ -1,7 +1,7 @@
 __author__ = 'matt'
 __date__ = '11/22/13'
-import sys, unittest
-from nose.tools import with_setup, raises
+import sys
+from nose.tools import raises
 from pgsql2gist import CLIInterface
 
 class TestKeyValues(object):
