@@ -4,4 +4,4 @@ __date__ = '11/24/13'
 from .gisthandler import GistAPIHandler
 from .pgconn import PostGISConnection
 from .cli import CLIInterface
-from .geojson import GeoJSONConstructor
+from .geojson import GeoJSONConstructor, OutOfBoundsError
