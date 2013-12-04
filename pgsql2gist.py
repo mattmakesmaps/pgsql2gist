@@ -37,10 +37,11 @@ optional arguments:
 """
 
 # Import relevant modules from the pgsql2gist package.
-from pgsql2gist import GistAPIHandler, PostGISConnection, CLIInterface, GeoJSONConstructor
+import time
 
 from psycopg2 import Error
-import time
+
+from pgsql2gist import GistAPIHandler, PostGISConnection, CLIInterface, GeoJSONConstructor
 
 
 if __name__ == '__main__':

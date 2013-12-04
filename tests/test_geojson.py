@@ -1,7 +1,6 @@
 __author__ = 'matt'
 __date__ = '11/23/13'
-import sys, unittest
-from nose.tools import with_setup, raises
+from nose.tools import raises
 from pgsql2gist import GeoJSONConstructor, OutOfBoundsError
 
 class TestOutOfBoundsErrorX(object):
