@@ -16,6 +16,8 @@ See issues for additional features to be implemented.
 Current Usage / Caveats
 =======================
 
+Listed below is the --help usage information.::
+
     POST GeoJSON or TopoJSON features from PostGIS to a Github Gist.
 
     Example usage: python pgsql2gist.py --host localhost --user matt tilestache \

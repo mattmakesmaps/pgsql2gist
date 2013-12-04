@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(
-    name='Pgsql2Gist',
+    name='pgsql2gist',
     version='0.2.0',
     author='Matthew Kenny',
     author_email='matthewkenny AT gmail DOT com',
