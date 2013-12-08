@@ -1,5 +1,30 @@
 __author__ = 'matt'
 __date__ = '11/24/13'
+"""
+Constructors are classes that are designed to accept geometry/attribute data as input,
+and convert to a serialized string, for POST'ing to Github using the Gist API.
+
+Constructor classes rely on a duck typed interface. A stub class looks like the following:
+
+class TopoJSONConstructor(object):
+    def __init__(self, records, geom_col='geometry'):
+        self.records = records
+        self.geom_col = geom_col
+
+    def encode(self):
+        raise NotImplementedError("TopoJSON Support Not Implemented In This Version.")
+
+As seen above the required attributes for a constructor class are:
+records - A list of dictionaries. Each dictionary represents a record to be serialized.
+          Dictionary key/values represent properties (tabular+geometry) for the record.
+          This attribute can be populated from any data source, but within the context
+          of this application, is the result of a call to psycopg2's fetchall() method.
+geom_col - A string representing the key for the a record dictionary (contained in the
+           records list) that holds geometry information. Defaults to 'geometry'
+
+An 'encode()' method is also required. This method should return a string representing the
+serialized geometry with attributes.
+"""
 
 import collections
 import json
@@ -17,8 +42,6 @@ class GeoJSONConstructor(object):
     records (LIST) - Each element is a dictionary representing
     columns and values for a single geojson feature.
     geom_col (STRING) - Indicates which dict key represents the geometry column.
-
-    TODO: Include validation checks. Add Exception Handling.
     """
     def __init__(self, records, geom_col='geometry'):
         self.records = records
@@ -90,3 +113,21 @@ class GeoJSONConstructor(object):
         features = [self.make_feature(row, self.geom_col) for row in self.records]
         feature_collection = self.make_feature_collection(features)
         return feature_collection
+
+
+class TopoJSONConstructor(object):
+    """
+    Given the following inputs, generate a TopoJSON feature collection.
+
+    Required Parameters:
+    records (LIST) - Each element is a dictionary representing
+    columns and values for a single geojson feature.
+    geom_col (STRING) - Indicates which dict key represents the geometry column.
+    """
+
+    def __init__(self, records, geom_col='geometry'):
+        self.records = records
+        self.geom_col = geom_col
+
+    def encode(self):
+        raise NotImplementedError("TopoJSON Support Not Implemented In This Version.")

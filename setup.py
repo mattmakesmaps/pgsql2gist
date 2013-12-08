@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='pgsql2gist',
-    version='0.2.1',
+    version='0.2.2',
     author='Matthew Kenny',
     author_email='matthewkenny AT gmail DOT com',
     classifiers=[
