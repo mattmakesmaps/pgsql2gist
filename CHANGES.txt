@@ -1,1 +1,16 @@
-v<version>, <date> -- Initial release.
+=======
+CHANGES
+=======
+
+Release 0.2.1
+-------------
+
+* Convert to setuptools build process.
+* Converted pgsql2gist.py script to pgsql2gist entry point.
+* Added nosetests to setup.py.
+* Added keywords and classifiers to setup.py.
+
+Release 0.2.0
+-------------
+
+* Initial Release as PyPi package.
