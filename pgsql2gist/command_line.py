@@ -4,7 +4,7 @@ __date__ = '11/19/13'
 """
 POST GeoJSON or TopoJSON features from PostGIS to a Github Gist.
 
-Example usage: python pgsql2gist.py --host localhost --user matt tilestache \
+Example usage: pgsql2gist --host localhost --user matt tilestache \
                "SELECT name, ST_AsGeoJSON(geom) AS geometry FROM neighborhoods LIMIT 5;"
 
 Current SELECT Statement Requirements:
@@ -39,7 +39,7 @@ optional arguments:
 # Import relevant modules from the pgsql2gist package.
 import time
 from psycopg2 import Error
-from pgsql2gist import GistAPIHandler, PostGISConnection, CLIInterface, GeoJSONConstructor
+from pgsql2gist import GistAPIHandler, PostGISConnection, CLIInterface, GeoJSONConstructor, TopoJSONConstructor
 
 
 def main():
@@ -58,8 +58,14 @@ def main():
                 # Get results
             query_results = db.fetchall()
 
-        # Create GeoJSON Feature Collection
-        features = GeoJSONConstructor(query_results, args["geom_col"]).encode()
+        # Mapping of file extensions to constructor classes
+        constructor_lookup = {'geojson': GeoJSONConstructor,
+                              'topojson': TopoJSONConstructor}
+
+        # Create Constructor and Execute Encode Method
+        constructor = constructor_lookup[args["format"]]
+        features = constructor(query_results, args["geom_col"]).encode()
+
         # Setup and create request to Gist API
         gist_handler = GistAPIHandler(args["file"], args["description"], features)
         gist_handler.create()

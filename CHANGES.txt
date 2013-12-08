@@ -2,6 +2,13 @@
 CHANGES
 =======
 
+Release 0.2.2
+-------------
+
+* Refactor geojson.py --> constructors.py
+* Documented duck type interface for constructor classes.
+* Updated README.txt to reflect new entry point.
+
 Release 0.2.1
 -------------
 

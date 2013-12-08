@@ -15,6 +15,8 @@ class CLIInterface(object):
         """
         self.parser = argparse.ArgumentParser(add_help=False,
                                               formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        # Internal Attribute will be used to populate dictionary in get_args_dict() method.
+        self._format = None
         # Build Parser
         self.setup()
 
@@ -40,12 +42,14 @@ class CLIInterface(object):
 
     def get_args_dict(self):
         """
-        Given an argparse parser object, wrap in a call to vars(), returning dictionary.
+        Given an argparse parser object, wrap in a call to vars(), returning a dictionary of attributes.
         This method also calls the input validation method.
         """
         args = self.parser.parse_args()
         args_dict = vars(args)
         if self._validate_args_dict(args_dict):
+            # Expose internal _format attribute along with dictionary of arg parse attributes.
+            args_dict["format"] = self._format
             return args_dict
 
     def _validate_args_dict(self, args_dict):
@@ -67,16 +71,19 @@ class CLIInterface(object):
         """
         Validate that file extensions are either geojson or topojson.
         Required for data to render in mapping interface.
+
+        Set the class' _format attribute.
         """
-        valid_extensions = ['.geojson', 'topojson']
+        valid_extensions = ['geojson', 'topojson']
         ext_is_valid = False
         for ext in valid_extensions:
             if args_dict['file'].endswith(ext):
+                self._format = ext
                 ext_is_valid = True
         if ext_is_valid:
             return True
         else:
-            raise ValueError('File extension does not end in .geojson or .topojson')
+            raise ValueError("File does not end in '.geojson' or '.topojson'. NOTE: Gist API is case-sensitive.")
 
     def _validate_topojson_geojson_call(self, args_dict):
         """
