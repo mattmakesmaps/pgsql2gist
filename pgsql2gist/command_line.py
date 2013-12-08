@@ -1,6 +1,6 @@
-__author__ = 'matt'
+#! /usr/bin/env python
+__author__ = 'Matthew Kenny'
 __date__ = '11/19/13'
-__version__ = '0.1'
 """
 POST GeoJSON or TopoJSON features from PostGIS to a Github Gist.
 
@@ -38,13 +38,11 @@ optional arguments:
 
 # Import relevant modules from the pgsql2gist package.
 import time
-
 from psycopg2 import Error
-
 from pgsql2gist import GistAPIHandler, PostGISConnection, CLIInterface, GeoJSONConstructor
 
 
-if __name__ == '__main__':
+def main():
     try:
         # Setup CLI; Parse User Input
         arg_parse = CLIInterface()
@@ -57,7 +55,7 @@ if __name__ == '__main__':
             except Error as e:
                 print "PostGIS SQL Execution Error: ", e.message
                 raise e
-            # Get results
+                # Get results
             query_results = db.fetchall()
 
         # Create GeoJSON Feature Collection
@@ -80,3 +78,7 @@ if __name__ == '__main__':
             print "ERROR: ", e.message
         print 'Terminating Script'
         raise SystemExit
+
+
+if __name__ == '__main__':
+    main()
