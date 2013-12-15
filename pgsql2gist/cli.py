@@ -61,10 +61,7 @@ class CLIInterface(object):
         """
         validation_functions = [self._validate_file_ext, self._validate_topojson_geojson_call]
         for func in validation_functions:
-            try:
-                func(args_dict)
-            except Exception, e:
-                raise e
+            func(args_dict)
         return True
 
     def _validate_file_ext(self, args_dict):
