@@ -2,7 +2,7 @@ from setuptools import setup
 
 here = os.path.abspath(os.path.dirname(__file__))
 requires = open(os.path.join(here, 'requirements.txt')).read()
-readme = open(os.path.join(here, 'README.txt')).read()
+readme = open(os.path.join(here, 'README.rst')).read()
 
 setup(
     name='pgsql2gist',
