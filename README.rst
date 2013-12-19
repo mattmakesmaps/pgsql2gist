@@ -4,7 +4,13 @@ pgsql2gist
 
 Like pgsql2shp, but for gists.
 
-.. image:: https://travis-ci.org/mattmakesmaps/pgsql2gist.png?branch=development   :target: https://travis-ci.org/mattmakesmaps/pgsql2gist
+dev-branch
+
+.. image:: https://travis-ci.org/mattmakesmaps/pgsql2gist.png?branch=development
+
+master
+
+.. image:: https://travis-ci.org/mattmakesmaps/pgsql2gist.png?branch=master
 
 Objective
 =========
