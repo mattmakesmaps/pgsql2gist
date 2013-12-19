@@ -6,11 +6,11 @@ Like pgsql2shp, but for gists.
 
 dev-branch
 
-.. image:: https://travis-ci.org/mattmakesmaps/pgsql2gist.png?branch=development   :target: https://travis-ci.org/mattmakesmaps/pgsql2gist
+.. image:: https://travis-ci.org/mattmakesmaps/pgsql2gist.png?branch=development
 
 master
 
-.. image:: https://travis-ci.org/mattmakesmaps/pgsql2gist.png?branch=master   :target: https://travis-ci.org/mattmakesmaps/pgsql2gist
+.. image:: https://travis-ci.org/mattmakesmaps/pgsql2gist.png?branch=master
 
 Objective
 =========
