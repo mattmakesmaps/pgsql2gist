@@ -1,5 +1,9 @@
 from setuptools import setup
 
+here = os.path.abspath(os.path.dirname(__file__))
+requires = open(os.path.join(here, 'requirements.txt')).read()
+readme = open(os.path.join(here, 'README.rst')).read()
+
 setup(
     name='pgsql2gist',
     version='0.2.2',
@@ -19,8 +23,8 @@ setup(
     license='GNU LESSER GENERAL PUBLIC LICENSE',
     keywords='gis gists postgis postgresql geojson',
     description='like pgsql2shp, but for github gists',
-    long_description=open('README.txt').read(),
-    install_requires=['psycopg2'],
+    long_description=readme,
+    install_requires=requires,
     test_suite='nose.collector',
     tests_require=['nose', 'nose-cover3'],
     include_package_data=True
