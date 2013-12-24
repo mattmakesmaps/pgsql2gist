@@ -39,17 +39,17 @@ optional arguments:
 # Import relevant modules from the pgsql2gist package.
 import time
 from psycopg2 import Error
-from pgsql2gist import GistAPIHandler, PostGISConnection, CLIInterface, GeoJSONConstructor, TopoJSONConstructor
+import pgsql2gist
 
 
 def main():
     try:
         # Setup CLI; Parse User Input
-        arg_parse = CLIInterface()
+        arg_parse = pgsql2gist.CLIInterface()
         args = arg_parse.get_args_dict()
 
         # Open DB Connection; Execute Query
-        with PostGISConnection(**args) as db:
+        with pgsql2gist.PostGISConnection(**args) as db:
             try:
                 db.execute(args["SELECT"])
             except Error as e:
@@ -59,15 +59,18 @@ def main():
             query_results = db.fetchall()
 
         # Mapping of file extensions to constructor classes
-        constructor_lookup = {'geojson': GeoJSONConstructor,
-                              'topojson': TopoJSONConstructor}
-
-        # Create Constructor and Execute Encode Method
+        constructor_lookup = {'geojson': pgsql2gist.GeoJSONConstructor,
+                              'topojson': pgsql2gist.TopoJSONConstructor}
+        # Reference constructor class
         constructor = constructor_lookup[args["format"]]
-        features = constructor(query_results, args["geom_col"]).encode()
+        # Instanciate constructor class
+        selected_constructor = constructor(query_results, args["geom_col"])
+        if args["verbose"]:
+            selected_constructor = pgsql2gist.VerboseConstructorDecorator(selected_constructor)
+        features = selected_constructor.encode()
 
         # Setup and create request to Gist API
-        gist_handler = GistAPIHandler(args["file"], args["description"], features)
+        gist_handler = pgsql2gist.GistAPIHandler(args["file"], args["description"], features)
         gist_handler.create()
 
         # Return rate limit and gist url to user.

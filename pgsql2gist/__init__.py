@@ -5,4 +5,4 @@ __date__ = '11/24/13'
 from .gisthandler import GistAPIHandler
 from .pgconn import PostGISConnection
 from .cli import CLIInterface
-from .constructors import GeoJSONConstructor, TopoJSONConstructor, OutOfBoundsError
+from .constructors import GeoJSONConstructor, TopoJSONConstructor, OutOfBoundsError, VerboseConstructorDecorator

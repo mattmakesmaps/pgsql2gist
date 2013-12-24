@@ -34,6 +34,29 @@ class OutOfBoundsError(Exception):
     pass
 
 
+class VerboseConstructorDecorator(object):
+    """
+    Decorator class to provide verbose output for any class implementing
+    the constructor interface (e.g. an encode() method).
+    """
+    def __init__(self, constructor):
+        self.constructor = constructor
+
+    def encode(self):
+        """
+        Return back a string representing a GeoJSON feature collection.
+        """
+        # Execute encode method, creating serialized string
+        encoded_str = self.constructor.encode()
+        # Return verbose output to user
+        print 'Begin Encoding Process'
+        for row in self.constructor.records:
+            print row
+        print 'Total Records Processed: %s' % len(self.constructor.records)
+        # Return serialized string to caller
+        return encoded_str
+
+
 class GeoJSONConstructor(object):
     """
     Given the following inputs, generate a GeoJSON feature collection.
@@ -65,7 +88,6 @@ class GeoJSONConstructor(object):
                 # else, yield the coordinate
                 else:
                     yield coordinate
-                # raise a bad coordinate error.
 
     def _is_feat_wgs84(self, geometry):
         """

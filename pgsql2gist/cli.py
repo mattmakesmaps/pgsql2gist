@@ -37,6 +37,7 @@ class CLIInterface(object):
         self.parser.add_argument("-P", "--password", help="PostGIS user password.")
         self.parser.add_argument("-u", "--user", help="PostGIS database user.", default="postgres")
         self.parser.add_argument("-g", "--geom-col", help="Geometry Column.", default="geometry")
+        self.parser.add_argument("-v", "--verbose", help="Verbose output.", action="store_true")
         # Add custom help flag
         self.parser.add_argument("-?", "--help", action="help")
 
