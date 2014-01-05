@@ -116,7 +116,7 @@ class GeoJSONConstructor(object):
             raise OutOfBoundsError("Coordinate %f, %f is not valid WGS84" % (coordinate[0], coordinate[1]))
         return True
 
-    def make_feature(self, record, geom_column):
+    def _make_feature(self, record, geom_column):
         """
         Given a database row via Psycopg's RealDictCursor
         return back a completed GeoJSON feature containing
@@ -128,7 +128,7 @@ class GeoJSONConstructor(object):
             encoded_feature = json.dumps(feature)
             return encoded_feature
 
-    def make_feature_collection(self, features_list):
+    def _make_feature_collection(self, features_list):
         """
         Given a list containing GeoJSON features, return as a
         GeoJSON Feature Collection.
@@ -142,8 +142,8 @@ class GeoJSONConstructor(object):
         """
         Return back a string representing a GeoJSON feature collection.
         """
-        features = [self.make_feature(row, self.geometry_col) for row in self.records]
-        feature_collection = self.make_feature_collection(features)
+        features = [self._make_feature(row, self.geometry_col) for row in self.records]
+        feature_collection = self._make_feature_collection(features)
         return feature_collection
 
 
@@ -167,7 +167,7 @@ class TopoJSONConstructor(object):
         self.geometry_col = geometry_col
         self.kwargs = kwargs
 
-    def make_feature(self, record, geom_column):
+    def _make_feature(self, record, geom_column):
         """
         Given a database row via Psycopg's RealDictCursor
         return back a completed TopoJSON feature containing
@@ -178,7 +178,7 @@ class TopoJSONConstructor(object):
         encoded_feature = json.dumps(feature)
         return encoded_feature
 
-    def make_geometry_collection(self, features_list, arcs_list):
+    def _make_geometry_collection(self, features_list, arcs_list):
         """
         Given a list containing GeoJSON features, return as a
         TopoJSON Topology GeometryCollection.
@@ -188,7 +188,7 @@ class TopoJSONConstructor(object):
         feature_collection = dict(type='Topology',
                                   transform=dict(scale=[1, 1], translate=[0, 0]),
                                   objects={
-                                      # Alternative dicitionary comprehension pattern
+                                      # Alternative dictionary comprehension pattern
                                       # Use if you don't want to wrap these features in
                                       # GeometryCollection object.
                                       # feat['properties']['gid']: feat for feat in features_json
@@ -198,7 +198,7 @@ class TopoJSONConstructor(object):
         encoded_feature_collection = json.dumps(feature_collection)
         return encoded_feature_collection
 
-    def delta_encode(self, arcs):
+    def _delta_encode(self, arcs):
         """
         Given a list of arcs, perform delta encoding for each arc,
         returning the modified list.
@@ -215,7 +215,7 @@ class TopoJSONConstructor(object):
             dest_arcs.append(delta_arc)
         return dest_arcs
 
-    def get_arcs(self):
+    def _get_arcs(self):
         """
         Query postgis to populate "arcs" array.
         NOTE: Might want to revise to utilize the topology_id and layer_id
@@ -245,7 +245,7 @@ class TopoJSONConstructor(object):
                 arc_query_results = db.fetchall()
                 # Convert query results into a list of arcs
                 arcs = [json.loads(arc['arc_geom'])['coordinates'] for arc in arc_query_results]
-                delta_arcs = self.delta_encode(arcs)
+                delta_arcs = self._delta_encode(arcs)
                 return delta_arcs
             except Error as e:
                 print "PostGIS SQL Execution Error: ", e.message
@@ -255,8 +255,8 @@ class TopoJSONConstructor(object):
         """
         Return back a string representing a TopoJSON Topology GeometryCollection.
         """
-        features = [self.make_feature(row, self.geometry_col) for row in self.records]
-        arcs = self.get_arcs()
-        feature_collection = self.make_geometry_collection(features, arcs)
+        features = [self._make_feature(row, self.geometry_col) for row in self.records]
+        arcs = self._get_arcs()
+        feature_collection = self._make_geometry_collection(features, arcs)
         return feature_collection
 
