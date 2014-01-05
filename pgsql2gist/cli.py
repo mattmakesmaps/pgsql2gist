@@ -37,6 +37,7 @@ class CLIInterface(object):
         self.parser.add_argument("-P", "--password", help="PostGIS user password.")
         self.parser.add_argument("-u", "--user", help="PostGIS database user.", default="postgres")
         self.parser.add_argument("-g", "--geom-col", help="Geometry Column.", default="geometry")
+        self.parser.add_argument("-t", "--topology-layer", help="For TopoJSON Queries; Name of Topology Layer")
         self.parser.add_argument("-v", "--verbose", help="Verbose output.", action="store_true")
         # Add custom help flag
         self.parser.add_argument("-?", "--help", action="help")
@@ -88,7 +89,7 @@ class CLIInterface(object):
         Validate that a user has invoked a call to ST_AsGeoJSON() or ST_AsTopoJSON()
         in their SELECT statement.
         """
-        valid_calls = ['st_asgeojson', 'st_astopojson']
+        valid_calls = ['st_asgeojson', 'astopojson']
         call_is_valid = False
         for call in valid_calls:
             if call.lower() in args_dict['SELECT'].lower():
@@ -96,4 +97,4 @@ class CLIInterface(object):
         if call_is_valid:
             return True
         else:
-            raise ValueError('SELECT statement does not contain call to ST_AsGeoJSON() or ST_AsTopoJSON()')
+            raise ValueError('SELECT statement does not contain call to ST_AsGeoJSON() or AsTopoJSON()')

@@ -51,6 +51,9 @@ def main():
         # Open DB Connection; Execute Query
         with pgsql2gist.PostGISConnection(**args) as db:
             try:
+                # TODO: Implement Better
+                create_temp_table = "CREATE TEMP TABLE edgemap(arc_id serial, edge_id int unique);"
+                db.execute(create_temp_table)
                 db.execute(args["SELECT"])
             except Error as e:
                 print "PostGIS SQL Execution Error: ", e.message
@@ -64,7 +67,7 @@ def main():
         # Reference constructor class
         constructor = constructor_lookup[args["format"]]
         # Instanciate constructor class
-        selected_constructor = constructor(query_results, args["geom_col"])
+        selected_constructor = constructor(query_results, args["geom_col"], **args)
         if args["verbose"]:
             selected_constructor = pgsql2gist.VerboseConstructorDecorator(selected_constructor)
         features = selected_constructor.encode()
