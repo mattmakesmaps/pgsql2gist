@@ -54,10 +54,10 @@ class VerboseConstructorDecorator(object):
         """
         Return back a string representing a GeoJSON feature collection.
         """
+        print 'Begin Encoding Process'
         # Execute encode method, creating serialized string
         encoded_str = self.constructor.encode()
         # Return verbose output to user
-        print 'Begin Encoding Process'
         for row in self.constructor.records:
             print row
         print 'Total Records Processed: %s' % len(self.constructor.records)
@@ -109,7 +109,8 @@ class GeoJSONConstructor(object):
             # Didn't get an exception, return True.
         return True
 
-    def _is_coord_wgs84(self, coordinate):
+    @staticmethod
+    def _is_coord_wgs84(coordinate):
         if 180 < coordinate[0] or coordinate[0] < -180:
             raise OutOfBoundsError("Coordinate %f, %f is not valid WGS84" % (coordinate[0], coordinate[1]))
         if 90 < coordinate[1] or coordinate[1] < -90:
@@ -128,7 +129,8 @@ class GeoJSONConstructor(object):
             encoded_feature = json.dumps(feature)
             return encoded_feature
 
-    def _make_feature_collection(self, features_list):
+    @staticmethod
+    def _make_feature_collection(features_list):
         """
         Given a list containing GeoJSON features, return as a
         GeoJSON Feature Collection.
@@ -167,7 +169,26 @@ class TopoJSONConstructor(object):
         self.geometry_col = geometry_col
         self.kwargs = kwargs
 
-    def _make_feature(self, record, geom_column):
+    @staticmethod
+    def _delta_encode(arcs):
+        """
+        Given a list of arcs, perform delta encoding for each arc,
+        returning the modified list.
+        """
+        dest_arcs = []
+        for arc in arcs:
+            delta_arc = []
+            previous_position = [0, 0]
+            for current_position in arc:
+                delta_position = [current_position[0]-previous_position[0],
+                                  current_position[1]-previous_position[1]]
+                previous_position = current_position
+                delta_arc.append(delta_position)
+            dest_arcs.append(delta_arc)
+        return dest_arcs
+
+    @staticmethod
+    def _make_feature(record, geom_column):
         """
         Given a database row via Psycopg's RealDictCursor
         return back a completed TopoJSON feature containing
@@ -198,26 +219,9 @@ class TopoJSONConstructor(object):
         encoded_feature_collection = json.dumps(feature_collection)
         return encoded_feature_collection
 
-    def _delta_encode(self, arcs):
-        """
-        Given a list of arcs, perform delta encoding for each arc,
-        returning the modified list.
-        """
-        dest_arcs = []
-        for arc in arcs:
-            delta_arc = []
-            previous_position = [0, 0]
-            for current_position in arc:
-                delta_position = [current_position[0]-previous_position[0],
-                                  current_position[1]-previous_position[1]]
-                previous_position = current_position
-                delta_arc.append(delta_position)
-            dest_arcs.append(delta_arc)
-        return dest_arcs
-
     def _get_arcs(self):
         """
-        Query postgis to populate "arcs" array.
+        Query postgis to populate "arcs" array. Will delta-encode arcs.
         NOTE: Might want to revise to utilize the topology_id and layer_id
               attributes of the topogeometry composite datatype.
               See: http://postgis.net/docs/topogeometry.html
