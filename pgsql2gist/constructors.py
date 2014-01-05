@@ -22,7 +22,7 @@ records - A list of dictionaries. Each dictionary represents a record to be seri
           of this application, is the result of a call to psycopg2's fetchall() method.
 geometry_col - A string representing the key for the a record dictionary (contained in the
            records list) that holds geometry information. Defaults to 'geometry'
-kwargs - Keyword arguments. These should typically represent CLI arguments output from
+kwargs - Any additionalal keyword arguments. For the topojson constructor, this represents CLI arguments output from
          argparse.
 
 An 'encode()' method is also required. This method should return a string representing the
@@ -149,13 +149,17 @@ class GeoJSONConstructor(object):
 
 class TopoJSONConstructor(object):
     """
-    Given the following inputs, generate a TopoJSON feature collection.
+    Given the following inputs, generate a TopoJSON GeometryCollection object
+    comprised of individual features.
 
     Required Parameters:
     records (LIST) - Each element is a dictionary representing
     columns and values for a single TopoJSON feature.
     geometry_col (STRING) - Indicates which dict key represents the geometry column.
     **kwargs (DICT) - CLI args parsed via argparse. Used to scrape the filename.
+
+    NOTE: This class currently relies on querying PostGIS to retrieve edge (arc)
+    geometries. As such, it is non-portable.
     """
 
     def __init__(self, records, geometry_col='geometry', **kwargs):
@@ -174,7 +178,7 @@ class TopoJSONConstructor(object):
         encoded_feature = json.dumps(feature)
         return encoded_feature
 
-    def make_feature_collection(self, features_list, arcs_list):
+    def make_geometry_collection(self, features_list, arcs_list):
         """
         Given a list containing GeoJSON features, return as a
         TopoJSON Topology GeometryCollection.
@@ -196,8 +200,8 @@ class TopoJSONConstructor(object):
 
     def delta_encode(self, arcs):
         """
-        Given a set of arcs of n-dimensions deep, return back a that set delta encoded.
-        ACTUALLY I DON'T THINK THIS IS NECESSARY SINCE ARCS WILL ALWAYS BE LINESTRINGS... SHIT
+        Given a list of arcs, perform delta encoding for each arc,
+        returning the modified list.
         """
         dest_arcs = []
         for arc in arcs:
@@ -233,7 +237,7 @@ class TopoJSONConstructor(object):
                 query_results = db.fetchall()
                 root_topology_name = query_results[0]['name']
 
-                # NOTE We're forcing a transform to WGS84
+                # NOTE We're forcing a transform to WGS84 and sorting edges.
                 select_arcs_by_root_topology = "SELECT ST_AsGeoJSON(ST_Transform(geom, 4326)) as arc_geom " \
                                                "FROM %s.edge AS e " \
                                                "ORDER BY e.edge_id" % root_topology_name
@@ -253,6 +257,6 @@ class TopoJSONConstructor(object):
         """
         features = [self.make_feature(row, self.geometry_col) for row in self.records]
         arcs = self.get_arcs()
-        feature_collection = self.make_feature_collection(features, arcs)
+        feature_collection = self.make_geometry_collection(features, arcs)
         return feature_collection
 
