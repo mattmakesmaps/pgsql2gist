@@ -51,9 +51,6 @@ def main():
         # Open DB Connection; Execute Query
         with pgsql2gist.PostGISConnection(**args) as db:
             try:
-                # TODO: Implement Better
-                create_temp_table = "CREATE TEMP TABLE edgemap(arc_id serial, edge_id int unique);"
-                db.execute(create_temp_table)
                 db.execute(args["SELECT"])
             except Error as e:
                 print "PostGIS SQL Execution Error: ", e.message
