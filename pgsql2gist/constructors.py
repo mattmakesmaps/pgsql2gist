@@ -34,7 +34,7 @@ Bad Example: https://gist.github.com/anonymous/2f761f3d36c995abb3fa
 from . import PostGISConnection
 from psycopg2 import Error
 import collections
-import json
+import simplejson as json
 
 
 class OutOfBoundsError(Exception):
