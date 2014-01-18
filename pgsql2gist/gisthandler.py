@@ -1,7 +1,7 @@
 __author__ = 'matt'
 __date__ = '11/24/13'
 
-import json
+import simplejson as json
 import urllib2
 
 

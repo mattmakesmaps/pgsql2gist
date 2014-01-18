@@ -13,6 +13,7 @@ class TestKeyValues(object):
                 '-p', '5432',
                 '-g', 'geometry',
                 '--user', 'matt',
+                '--verbose',
                 'tilestache',
                 'SELECT hoods_, ST_AsGeoJSON(geom) AS geometry FROM neighborhoods LIMIT 5;']
         sys.argv = self.args
@@ -22,7 +23,8 @@ class TestKeyValues(object):
         """
         Check that argparse is returning all keys as expected.
         """
-        expected_keys = ['description', 'database', 'geom_col', 'host', 'user', 'password', 'file', 'port', 'SELECT']
+        expected_keys = ['description', 'database', 'geom_col', 'host', 'user',
+                         'password', 'file', 'port', 'SELECT', 'verbose']
         args_dict = self.arg_parser.get_args_dict()
         for key in expected_keys:
             assert key in args_dict
@@ -32,7 +34,7 @@ class TestKeyValues(object):
         Check that argparse is returning both user provided values
         as well as properly setting default values.
         """
-        expected_args_dict =  {'description': 'sample description',
+        expected_args_dict = {'description': 'sample description',
                                'database': 'tilestache',
                                'geom_col': 'geometry',
                                'host': 'localhost',
@@ -40,6 +42,7 @@ class TestKeyValues(object):
                                'file': 'test.geojson',
                                'password': None,
                                'port': 5432,
+                               'verbose': True,
                                'SELECT': 'SELECT hoods_, ST_AsGeoJSON(geom) AS geometry FROM neighborhoods LIMIT 5;'}
 
         args_dict = self.arg_parser.get_args_dict()

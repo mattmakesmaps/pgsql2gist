@@ -4,5 +4,13 @@ python:
 # command to install dependencies
 install:
   - "pip install -r requirements.txt --use-mirrors"
+
+# database creation
+before_script:
+  - psql -c 'create database pgsql2gist_test;' -U postgres
+  - psql -c 'CREATE EXTENSION postgis;' -U postgres -d pgsql2gist_test
+  - psql -c 'CREATE EXTENSION postgis_topology;' -U postgres -d pgsql2gist_test 
+  - psql -f test_data.sql -U postgres -d pgsql2gist_test
+
 # command to run tests
 script: nosetests
