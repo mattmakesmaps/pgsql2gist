@@ -2,6 +2,10 @@
 CHANGES
 =======
 
+Release 0.3.0
+-------------
+* Added support for TopoJSON Line/Polygon Construction
+
 Release 0.2.2
 -------------
 
